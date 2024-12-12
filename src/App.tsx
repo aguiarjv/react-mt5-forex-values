@@ -3,6 +3,7 @@ import { AddSymbol } from "./components/add-new-symbol";
 import { DataCard } from "./components/data-card";
 import { ThemeProvider } from "./components/theme-provider";
 import { SymbolData, WsSymbolData } from "./definitions/symbol";
+import { ConfigButton } from "./components/config-button";
 
 const webSocketServer = "ws://localhost:8000/ws";
 
@@ -61,6 +62,25 @@ const defaultValues: SymbolData[] = [
 
 function App() {
   const [symbolsData, setSymbolsData] = useState(defaultValues);
+  const [backendServer, setBackendServer] = useState(webSocketServer);
+
+  const handleChangeServer = (serverAddress: string) => {
+    let newServerAddress = "";
+    if (serverAddress.startsWith("https://")) {
+      newServerAddress = serverAddress.replace("https://", "");
+    } else if (serverAddress.startsWith("http://")) {
+      newServerAddress = serverAddress.replace("http://", "");
+    } else if (serverAddress.startsWith("ws://")) {
+      newServerAddress = serverAddress.replace("ws://", "");
+    }
+
+    if (!serverAddress.endsWith("/ws")) {
+      newServerAddress = newServerAddress + "/ws";
+    }
+    newServerAddress = "ws://" + newServerAddress;
+
+    setBackendServer(newServerAddress);
+  };
 
   const handleUpdateVolume = (index: number, volume: number) => {
     const nextData = symbolsData.map((data, i) => {
@@ -106,7 +126,7 @@ function App() {
   }, [symbolsData]);
 
   useEffect(() => {
-    const ws = new WebSocket(webSocketServer);
+    const ws = new WebSocket(backendServer);
 
     ws.onopen = () => {
       console.log("WebSocket connection established");
@@ -118,7 +138,7 @@ function App() {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log(data);
+      //console.log(data);
       updateSymbolsData(data);
     };
 
@@ -158,7 +178,7 @@ function App() {
       ws.close();
       clearInterval(interval);
     };
-  }, []);
+  }, [backendServer]);
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -167,7 +187,13 @@ function App() {
           <h1 className="text-xl font-bold">
             MT5 Symbols USD Values by Points
           </h1>
-          <AddSymbol handleCreateSymbol={handleCreateSymbol} />
+          <div className="space-x-3">
+            <ConfigButton
+              currentServer={backendServer}
+              handleChangeServer={handleChangeServer}
+            />
+            <AddSymbol handleCreateSymbol={handleCreateSymbol} />
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-4 ">
           {symbolsData.map((data, symbolIndex) => (
