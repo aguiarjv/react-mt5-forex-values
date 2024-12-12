@@ -5,7 +5,35 @@ import { ThemeProvider } from "./components/theme-provider";
 import { SymbolData, WsSymbolData } from "./definitions/symbol";
 import { ConfigButton } from "./components/config-button";
 
-const webSocketServer = "ws://localhost:8000/ws";
+const currentPathname = window.location.href;
+
+const getWebSocketServer = (pathname: string): string => {
+  let newServerAddress = "";
+
+  if (pathname.startsWith("https://")) {
+    newServerAddress = pathname.replace("https://", "");
+  } else if (pathname.startsWith("http://")) {
+    newServerAddress = pathname.replace("http://", "");
+  } else if (pathname.startsWith("ws://") || pathname.startsWith("wss://")) {
+    return pathname;
+  }
+
+  if (pathname.endsWith("/")) {
+    newServerAddress = newServerAddress.slice(0, -1);
+  }
+
+  if (!pathname.endsWith("/ws")) {
+    newServerAddress = newServerAddress + "/ws";
+  }
+
+  if (pathname.includes("localhost:") || pathname.includes("127.0.0.1:")) {
+    return `ws://${newServerAddress}`;
+  } else {
+    return `wss://${newServerAddress}`;
+  }
+};
+
+const webSocketServer = getWebSocketServer(currentPathname);
 
 const defaultValues: SymbolData[] = [
   {
@@ -65,26 +93,7 @@ function App() {
   const [backendServer, setBackendServer] = useState(webSocketServer);
 
   const handleChangeServer = (serverAddress: string) => {
-    let newServerAddress = "";
-    if (serverAddress.startsWith("https://")) {
-      newServerAddress = serverAddress.replace("https://", "");
-    } else if (serverAddress.startsWith("http://")) {
-      newServerAddress = serverAddress.replace("http://", "");
-    } else if (
-      serverAddress.startsWith("ws://") ||
-      serverAddress.startsWith("wss://")
-    ) {
-      setBackendServer(serverAddress);
-    }
-
-    if (serverAddress.endsWith("/")) {
-      newServerAddress = newServerAddress.slice(0, -1);
-    }
-
-    if (!serverAddress.endsWith("/ws")) {
-      newServerAddress = newServerAddress + "/ws";
-    }
-    newServerAddress = "wss://" + newServerAddress;
+    let newServerAddress = getWebSocketServer(serverAddress);
 
     setBackendServer(newServerAddress);
   };
