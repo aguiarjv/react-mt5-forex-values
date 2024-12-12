@@ -70,14 +70,21 @@ function App() {
       newServerAddress = serverAddress.replace("https://", "");
     } else if (serverAddress.startsWith("http://")) {
       newServerAddress = serverAddress.replace("http://", "");
-    } else if (serverAddress.startsWith("ws://")) {
-      newServerAddress = serverAddress.replace("ws://", "");
+    } else if (
+      serverAddress.startsWith("ws://") ||
+      serverAddress.startsWith("wss://")
+    ) {
+      setBackendServer(serverAddress);
+    }
+
+    if (serverAddress.endsWith("/")) {
+      newServerAddress = newServerAddress.slice(0, -1);
     }
 
     if (!serverAddress.endsWith("/ws")) {
       newServerAddress = newServerAddress + "/ws";
     }
-    newServerAddress = "ws://" + newServerAddress;
+    newServerAddress = "wss://" + newServerAddress;
 
     setBackendServer(newServerAddress);
   };
